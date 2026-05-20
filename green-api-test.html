@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GREEN-API | Тестовое задание</title>
+    <style>
+        .flex-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            max-width: 1300px;
+            margin: 0 auto;
+            font-family: system-ui, sans-serif;
+            align-items: stretch;
+        }
+        .left-panel {
+            flex: 1.2;
+            min-width: 280px;
+            display: flex;
+            flex-direction: column;
+        }
+        .right-panel {
+            flex: 1.8;
+            min-width: 300px;
+            display: flex;
+            flex-direction: column;
+        }
+        .right-card {
+            border: 1px solid #ccc;
+            padding: 20px;
+            border-radius: 8px;
+            background: #f9f9f9;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+        .response-pre {
+            background: white;
+            padding: 12px;
+            border: 1px solid #ddd;
+            overflow: auto;
+            max-height: 500px;
+            font-family: monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+            flex: 1;
+        }
+        .left-card {
+            border: 1px solid #ccc;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+        }
+        .left-card:last-child {
+            margin-bottom: 0;
+        }
+        input, button {
+            font-family: inherit;
+        }
+        input {
+            width: 100%;
+            padding: 8px;
+            box-sizing: border-box;
+        }
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            font-size: 12px;
+            color: #666;
+            padding: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="flex-container">
+        
+        <div class="left-panel">
+            <div class="left-card">
+                <div style="font-weight: bold; margin-bottom: 15px;">Параметры подключения</div>
+                <div style="margin-bottom: 12px;">
+                    <div>idInstance</div>
+                    <input type="text" id="idInstance" placeholder="Введите idInstance">
+                </div>
+                <div style="margin-bottom: 12px;">
+                    <div>apiTokenInstance</div>
+                    <input type="text" id="apiToken" placeholder="Введите apiTokenInstance">
+                </div>
+                <div class="button-group">
+                    <button id="getSettingsBtn">getSettings</button>
+                    <button id="getStateBtn">getStateInstance</button>
+                </div>
+            </div>
+
+            <div class="left-card">
+                <div style="font-weight: bold; margin-bottom: 15px;">sendMessage</div>
+                <div style="margin-bottom: 12px;">
+                    <div>Номер получателя</div>
+                    <input type="text" id="phoneNumber" placeholder="77771234567">
+                </div>
+                <div style="margin-bottom: 12px;">
+                    <div>Текст сообщения</div>
+                    <input type="text" id="messageText" placeholder="Введите текст сообщения" value="Hello World!">
+                </div>
+                <div style="margin-top: 10px;">
+                    <button id="sendMsgBtn">sendMessage</button>
+                </div>
+            </div>
+
+            <div class="left-card">
+                <div style="font-weight: bold; margin-bottom: 15px;">sendFileByUrl</div>
+                <div style="margin-bottom: 12px;">
+                    <div>Номер получателя</div>
+                    <input type="text" id="filePhoneNumber" placeholder="77771234567">
+                </div>
+                <div style="margin-bottom: 12px;">
+                    <div>URL файла</div>
+                    <input type="text" id="fileUrl" placeholder="https://example.com/file.pdf" value="https://www.w3.org/WAI/er/tests/xhtml/testfiles/resources/pdf/dummy.pdf">
+                </div>
+                <div style="margin-top: 10px;">
+                    <button id="sendFileBtn">sendFileByUrl</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="right-panel">
+            <div class="right-card">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+                    <div style="font-weight: bold;">Ответ методов API</div>
+                    <span id="timestampBadge" style="font-family: monospace;">—</span>
+                </div>
+                <pre id="responseOutput" class="response-pre">{
+  "status": "waiting",
+  "instruction": "Enter idInstance and ApiTokenInstance"
+}</pre>
+                <div style="margin-top: 15px; text-align: right;">
+                    <button id="clearResponseBtn">Очистить вывод</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">
+        GREEN-API | Методы: getSettings, getStateInstance, sendMessage, sendFileByUrl
+    </div>
+
+    <script>
+        const idInstanceInput = document.getElementById('idInstance');
+        const apiTokenInput = document.getElementById('apiToken');
+        const responsePre = document.getElementById('responseOutput');
+        const timestampSpan = document.getElementById('timestampBadge');
+
+        function displayResponse(data, isError = false) {
+            let outputText = '';
+            if (isError) {
+                outputText = JSON.stringify({ error: data?.message || data, details: data }, null, 2);
+            } else {
+                try {
+                    if (typeof data === 'string') {
+                        try {
+                            const parsed = JSON.parse(data);
+                            outputText = JSON.stringify(parsed, null, 2);
+                        } catch (e) {
+                            outputText = data;
+                        }
+                    } else {
+                        outputText = JSON.stringify(data, null, 2);
+                    }
+                } catch (err) {
+                    outputText = String(data);
+                }
+            }
+            responsePre.textContent = outputText;
+            const now = new Date();
+            timestampSpan.textContent = now.toLocaleTimeString();
+        }
+
+        document.getElementById('clearResponseBtn').addEventListener('click', () => {
+            responsePre.textContent = '{"status": "output cleared"}';
+            timestampSpan.textContent = '—';
+        });
+
+        function getCredentials() {
+            const idInstance = idInstanceInput.value.trim();
+            const apiTokenInstance = apiTokenInput.value.trim();
+            if (!idInstance || !apiTokenInstance) {
+                throw new Error('idInstance or ApiTokenInstance is missing');
+            }
+            return { idInstance, apiTokenInstance };
+        }
+
+        async function callGetMethod(method) {
+            try {
+                const { idInstance, apiTokenInstance } = getCredentials();
+                const url = `https://api.green-api.com/waInstance${idInstance}/${method}/${apiTokenInstance}`;
+                const response = await fetch(url, {
+                    method: 'GET',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`HTTP ${response.status}: ${errorText}`);
+                }
+                const data = await response.json();
+                displayResponse(data);
+                return data;
+            } catch (err) {
+                console.error(err);
+                displayResponse({ message: err.message }, true);
+                throw err;
+            }
+        }
+
+        async function sendMessageToApi(chatId, message) {
+            try {
+                const { idInstance, apiTokenInstance } = getCredentials();
+                let formattedChatId = chatId;
+                if (!formattedChatId.includes('@') && !formattedChatId.includes('c.us')) {
+                    const cleaned = formattedChatId.replace(/[^0-9+]/g, '');
+                    formattedChatId = `${cleaned}@c.us`;
+                }
+                const url = `https://api.green-api.com/waInstance${idInstance}/sendMessage/${apiTokenInstance}`;
+                const payload = {
+                    chatId: formattedChatId,
+                    message: message
+                };
+                const resp = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await resp.json();
+                displayResponse(data);
+                return data;
+            } catch (err) {
+                displayResponse({ error: 'sendMessage error: ' + err.message }, true);
+                throw err;
+            }
+        }
+
+        async function sendFileByUrlApi(chatId, fileUrl) {
+            try {
+                const { idInstance, apiTokenInstance } = getCredentials();
+                let formattedChatId = chatId;
+                if (!formattedChatId.includes('@') && !formattedChatId.includes('c.us')) {
+                    const cleaned = formattedChatId.replace(/[^0-9+]/g, '');
+                    formattedChatId = `${cleaned}@c.us`;
+                }
+                const url = `https://api.green-api.com/waInstance${idInstance}/sendFileByUrl/${apiTokenInstance}`;
+                const payload = {
+                    chatId: formattedChatId,
+                    urlFile: fileUrl
+                };
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const result = await response.json();
+                displayResponse(result);
+                return result;
+            } catch (err) {
+                displayResponse({ error: 'sendFileByUrl error: ' + err.message }, true);
+                throw err;
+            }
+        }
+
+        document.getElementById('getSettingsBtn').addEventListener('click', async () => {
+            try {
+                await callGetMethod('getSettings');
+            } catch (e) {}
+        });
+
+        document.getElementById('getStateBtn').addEventListener('click', async () => {
+            try {
+                await callGetMethod('getStateInstance');
+            } catch (e) {}
+        });
+
+        document.getElementById('sendMsgBtn').addEventListener('click', async () => {
+            let phone = document.getElementById('phoneNumber').value.trim();
+            const message = document.getElementById('messageText').value.trim();
+            if (!phone) {
+                displayResponse({ error: "Enter recipient phone number for sendMessage" }, true);
+                return;
+            }
+            if (!message) {
+                displayResponse({ error: "Enter message text" }, true);
+                return;
+            }
+            let chatId = phone;
+            if (/^[0-9+]+$/.test(phone.replace(/[^0-9]/g, '')) && !phone.includes('@')) {
+                let cleanNumber = phone.replace(/[^0-9]/g, '');
+                if (cleanNumber.length > 5) {
+                    chatId = `${cleanNumber}@c.us`;
+                }
+            }
+            try {
+                await sendMessageToApi(chatId, message);
+            } catch (err) {}
+        });
+
+        document.getElementById('sendFileBtn').addEventListener('click', async () => {
+            let phoneForFile = document.getElementById('filePhoneNumber').value.trim();
+            let urlFile = document.getElementById('fileUrl').value.trim();
+            if (!phoneForFile) {
+                displayResponse({ error: "Enter recipient phone number for file sending" }, true);
+                return;
+            }
+            if (!urlFile) {
+                displayResponse({ error: "Enter file URL" }, true);
+                return;
+            }
+            try {
+                new URL(urlFile);
+            } catch (e) {
+                displayResponse({ error: "Invalid file URL" }, true);
+                return;
+            }
+            let chatIdFile = phoneForFile;
+            if (/^[0-9+]+$/.test(phoneForFile.replace(/[^0-9]/g, '')) && !phoneForFile.includes('@')) {
+                let clean = phoneForFile.replace(/[^0-9]/g, '');
+                chatIdFile = `${clean}@c.us`;
+            }
+            try {
+                await sendFileByUrlApi(chatIdFile, urlFile);
+            } catch (err) {}
+        });
+
+        function loadSavedCreds() {
+            const savedId = localStorage.getItem('green_idInstance');
+            const savedToken = localStorage.getItem('green_apiToken');
+            if (savedId) idInstanceInput.value = savedId;
+            if (savedToken) apiTokenInput.value = savedToken;
+            const savedPhone = localStorage.getItem('green_lastPhone');
+            if (savedPhone) document.getElementById('phoneNumber').value = savedPhone;
+            const savedFilePhone = localStorage.getItem('green_filePhone');
+            if (savedFilePhone) document.getElementById('filePhoneNumber').value = savedFilePhone;
+        }
+        function saveCreds() {
+            const idVal = idInstanceInput.value.trim();
+            const tokenVal = apiTokenInput.value.trim();
+            if (idVal) localStorage.setItem('green_idInstance', idVal);
+            if (tokenVal) localStorage.setItem('green_apiToken', tokenVal);
+            const phoneVal = document.getElementById('phoneNumber').value.trim();
+            if (phoneVal) localStorage.setItem('green_lastPhone', phoneVal);
+            const filePhoneVal = document.getElementById('filePhoneNumber').value.trim();
+            if (filePhoneVal) localStorage.setItem('green_filePhone', filePhoneVal);
+        }
+        idInstanceInput.addEventListener('input', saveCreds);
+        apiTokenInput.addEventListener('input', saveCreds);
+        document.getElementById('phoneNumber').addEventListener('input', saveCreds);
+        document.getElementById('filePhoneNumber').addEventListener('input', saveCreds);
+        loadSavedCreds();
+    </script>
+</body>
+</html>
