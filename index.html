@@ -119,6 +119,10 @@
                     <div>URL файла</div>
                     <input type="text" id="fileUrl" placeholder="https://example.com/file.pdf" value="https://www.w3.org/WAI/er/tests/xhtml/testfiles/resources/pdf/dummy.pdf">
                 </div>
+                <div style="margin-bottom: 12px;">
+                    <div>Имя файла</div>
+                    <input type="text" id="fileName" placeholder="Имя файла" value="document.pdf">
+                </div>
                 <div style="margin-top: 10px;">
                     <button id="sendFileBtn">sendFileByUrl</button>
                 </div>
@@ -236,7 +240,7 @@
             }
         }
 
-        async function sendFileByUrlApi(chatId, fileUrl) {
+        async function sendFileByUrlApi(chatId, fileUrl, fileName) {
             try {
                 const { idInstance, apiTokenInstance } = getCredentials();
                 let formattedChatId = chatId;
@@ -247,7 +251,8 @@
                 const url = `https://api.green-api.com/waInstance${idInstance}/sendFileByUrl/${apiTokenInstance}`;
                 const payload = {
                     chatId: formattedChatId,
-                    urlFile: fileUrl
+                    urlFile: fileUrl,
+                    fileName: fileName
                 };
                 const response = await fetch(url, {
                     method: 'POST',
@@ -301,12 +306,17 @@
         document.getElementById('sendFileBtn').addEventListener('click', async () => {
             let phoneForFile = document.getElementById('filePhoneNumber').value.trim();
             let urlFile = document.getElementById('fileUrl').value.trim();
+            let fileName = document.getElementById('fileName').value.trim();
             if (!phoneForFile) {
                 displayResponse({ error: "Enter recipient phone number for file sending" }, true);
                 return;
             }
             if (!urlFile) {
                 displayResponse({ error: "Enter file URL" }, true);
+                return;
+            }
+            if (!fileName) {
+                displayResponse({ error: "Enter file name" }, true);
                 return;
             }
             try {
@@ -321,7 +331,7 @@
                 chatIdFile = `${clean}@c.us`;
             }
             try {
-                await sendFileByUrlApi(chatIdFile, urlFile);
+                await sendFileByUrlApi(chatIdFile, urlFile, fileName);
             } catch (err) {}
         });
 
@@ -334,6 +344,8 @@
             if (savedPhone) document.getElementById('phoneNumber').value = savedPhone;
             const savedFilePhone = localStorage.getItem('green_filePhone');
             if (savedFilePhone) document.getElementById('filePhoneNumber').value = savedFilePhone;
+            const savedFileName = localStorage.getItem('green_fileName');
+            if (savedFileName) document.getElementById('fileName').value = savedFileName;
         }
         function saveCreds() {
             const idVal = idInstanceInput.value.trim();
@@ -344,11 +356,14 @@
             if (phoneVal) localStorage.setItem('green_lastPhone', phoneVal);
             const filePhoneVal = document.getElementById('filePhoneNumber').value.trim();
             if (filePhoneVal) localStorage.setItem('green_filePhone', filePhoneVal);
+            const fileNameVal = document.getElementById('fileName').value.trim();
+            if (fileNameVal) localStorage.setItem('green_fileName', fileNameVal);
         }
         idInstanceInput.addEventListener('input', saveCreds);
         apiTokenInput.addEventListener('input', saveCreds);
         document.getElementById('phoneNumber').addEventListener('input', saveCreds);
         document.getElementById('filePhoneNumber').addEventListener('input', saveCreds);
+        document.getElementById('fileName').addEventListener('input', saveCreds);
         loadSavedCreds();
     </script>
 </body>
